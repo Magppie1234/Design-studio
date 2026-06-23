@@ -20,7 +20,7 @@ export const config = { maxDuration: 90 };
 const IMAGE_MODEL   = process.env.OPENAI_IMAGE_MODEL   || "gpt-image-2";
 const VISION_MODEL  = process.env.OPENAI_VISION_MODEL  || "gpt-4o";
 const IMAGE_SIZE    = process.env.OPENAI_IMAGE_SIZE    || "1536x1024"; // 3:2 to fit the proposal perspective slots
-const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || "high";
+const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || "medium";
 
 // ---- Silverstone finishes (used for both countertop and cabinet) ----
 const STONES = {
