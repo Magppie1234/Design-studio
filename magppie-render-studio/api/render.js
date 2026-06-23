@@ -15,18 +15,21 @@
 
 import OpenAI, { toFile } from "openai";
 
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 80 };
 
 const IMAGE_MODEL   = process.env.OPENAI_IMAGE_MODEL   || "gpt-image-2";
 const VISION_MODEL  = process.env.OPENAI_VISION_MODEL  || "gpt-4o";
 const IMAGE_SIZE    = process.env.OPENAI_IMAGE_SIZE    || "1536x1024"; // 3:2 to fit the proposal perspective slots
-const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || "high";
+const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || "medium";
 
 // ---- Silverstone finishes (used for both countertop and cabinet) ----
 const STONES = {
+  "veticano":      { name: "Veticano",       desc: "a bold white quartzite-look stone: a bright, cool ivory-white ground cut by strong grey-to-charcoal veins that branch and fork across the slab like fine fractures, woven through with warm rust-gold and amber mineral accents, polished to a glossy reflective finish; dramatic and high-movement, with crisp contrast between the white field and the dark, gold-touched veining" },
+  "onyx-mystic":   { name: "Onyx Mystic",    desc: "a soft, milky white onyx, pale and luminous, with cloudy translucent areas and only the faintest, sparse wisps of pale gold and soft grey drifting through; gentle cloud-like movement rather than defined veins, polished to a soft sheen; calm, delicate, and understated, never bold or high-contrast" },
+  "cloudstone":    { name: "Cloudstone",     desc: "a soft, warm cream limestone-look stone, almost plain, with gentle cloud-like tonal mottling in ivory and pale beige and no defined veins; an even, honed matte-to-soft sheen rather than gloss; quiet, warm, and uniform, never busy, veined, contrasting, or dramatic" },
   "bianco-lasa":   { name: "Bianco Lasa",    desc: "a warm ivory-white engineered stone crossed by soft, feather-fine diagonal striations in pale taupe-grey, delicate and linear, with a polished surface that catches light softly" },
   "statuario-gold":{ name: "Statuario Gold", desc: "a crisp bright-white marble-look stone with bold flowing grey veining from charcoal to soft silver, threaded with fine warm golden-ochre accent veins, polished and reflective" },
-  "onyx-gold":     { name: "Onyx Gold",      desc: "a milky ivory translucent onyx with swirling agate-like rings and warm golden-amber veins, a luminous high-gloss surface where light appears to glow from within" },
+  "onyx-gold":     { name: "Onyx Gold",      desc: "a soft, pale ivory-cream onyx, calm and understated, crossed by fine, sparse, wispy honey-gold veins that drift gently across large quiet areas of the slab, with a gentle polished sheen and only the faintest translucency; delicate and restful, never bold, dramatic, high-contrast, or heavily swirled" },
   "taj":           { name: "Taj",            desc: "a warm sandy-beige quartzite-look stone with soft feathered, brushstroke-like movement in tonal beige and light taupe, in a satin-honed low sheen" },
   "cosmic":        { name: "Cosmic",         desc: "a soft sand-beige limestone-look stone with a finely mottled, lightly pitted surface, small natural inclusions and gentle cloudy variation, in a matte honed finish" },
   "trevi":         { name: "Trevi",          desc: "a soft, even light-grey stone with a smooth concrete-like surface, subtle vertical cloud movement and faint hairline veining, in a quiet matte finish" }
@@ -40,7 +43,7 @@ const GLASS = {
 };
 
 const LIGHTING = {
-  default: "Integrated lighting, shown as genuinely installed LED and styled like a high-end architectural render: warm 2700K to 3000K accents, layered and subtle, never theatrical. Soft, slightly cool daylight fills the room from a ceiling sunroof above, keeping the walls and upper cabinets bright and clean. Warm under-cabinet LED washes down the backsplash and across the countertop. Warm under-counter LED runs beneath the worktop front overhang and glows onto the cabinetry below. A warm skirting LED at the plinth casts a soft pool of light onto the floor along the full run of cabinets. Warm in-cabinet LED lights the interiors and shelves of the glass-fronted and open brass-framed cabinets so they glow from within. Balance the warm accents against the neutral daylight so the overall image reads bright, warm, and realistic, with soft shadows and gentle reflections on the polished stone."
+  default: "Integrated lighting, shown as genuinely installed LED and styled like a high-end architectural render: warm 2700K to 3000K accents, layered and subtle, never theatrical. Soft, slightly cool daylight fills the room from a ceiling sunroof above, keeping the walls and upper cabinets bright and clean. Warm under-cabinet LED washes down the backsplash and across the countertop. Warm under-counter LED runs beneath the worktop front overhang and glows onto the cabinetry below. A warm skirting LED at the plinth casts a soft pool of light onto the floor along the full run of cabinets. Warm in-cabinet LED lights the interiors and shelves of the glass-fronted and open brass-framed cabinets so they glow from within. Balance the warm accents against the neutral daylight so the overall image reads bright, warm, and realistic, with soft shadows and gentle reflections on the stone surfaces."
 };
 
 const PROFILE = "slim brushed brass frames with a warm satin finish and soft highlights";
@@ -63,11 +66,11 @@ function buildPrompt({ stone, cabinet, glass, lighting, layout, imageNote }) {
     "- Cabinet shutters, surfaced in " + cabinet + ".",
     "- Upper glass shutters: " + glass + ", framed in " + PROFILE + ".",
     "",
-    "Texture mapping: map every stone surface as large-format, book-matched polished slabs. The veining must be large in scale and flow continuously across each surface and across adjacent panels, as if cut from a single slab, and it must run continuously from the countertop up into the backsplash. Never render the stone as small, busy, repeating, or visibly tiled texture. Keep the stone scale and character consistent across every surface it covers, so the countertop, backsplash, and stone-surfaced cabinet fronts read as one cohesive material. Match the reference stone swatch's actual character and subtlety exactly: reproduce its real colour, vein colour, vein density, and pattern, and if the reference is pale and lightly veined, keep it pale and lightly veined. Do not exaggerate, over-saturate, brighten, or add dramatic swirling veins that are not present in the reference swatch.",
+    "Texture mapping: map every stone surface as large-format, book-matched slabs, so the pattern spans large areas rather than small repeating tiles. The veining flows continuously across each surface and across adjacent panels, as if cut from a single slab, and runs continuously from the countertop up into the backsplash. Keep the stone scale and character consistent across every surface it covers, so the countertop, backsplash, and stone-surfaced cabinet fronts read as one cohesive material. Reproduce the reference stone swatch's actual character exactly: its true ground colour, vein colour, vein density, contrast, and scale. Match how subtle or how bold the reference actually is, neither softening a boldly veined stone into a plain one nor dramatising a quiet, lightly veined stone into a busy one. Do not invent veining heavier, brighter, or more saturated than the reference, and do not flatten veining the reference clearly shows.",
     "",
     lighting,
     "",
-    "Render it to the quality of a high-end architectural visualisation photograph: polished engineered-stone surfaces with soft, believable reflections; slim brushed-brass bar-pull handles and shelf frames with gentle metallic highlights; realistic soft shadows and contact shadows; a warm, inviting overall colour grade; and balanced exposure with no blown highlights or crushed shadows.",
+    "Render it to the quality of a high-end architectural visualisation photograph: engineered-stone surfaces rendered at the sheen each finish calls for, from glossy and reflective to soft and matte, with believable reflections only where the finish is glossy; slim brushed-brass bar-pull handles and shelf frames with gentle metallic highlights; realistic soft shadows and contact shadows; a warm, inviting overall colour grade; and balanced exposure with no blown highlights or crushed shadows.",
     "Accurate to a real, buildable Magppie kitchen. No exaggerated glow, no impossible reflections, no fantasy elements, no people, no text, no watermarks, no logos."
   ].join("\n");
 }
