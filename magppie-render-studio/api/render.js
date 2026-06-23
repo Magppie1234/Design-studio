@@ -15,7 +15,7 @@
 
 import OpenAI, { toFile } from "openai";
 
-export const config = { maxDuration: 120 };
+export const config = { maxDuration: 60 };
 
 const IMAGE_MODEL   = process.env.OPENAI_IMAGE_MODEL   || "gpt-image-2";
 const VISION_MODEL  = process.env.OPENAI_VISION_MODEL  || "gpt-4o";
@@ -56,14 +56,14 @@ function buildPrompt({ stone, cabinet, glass, lighting, layout, imageNote }) {
   const noteLine = imageNote ? imageNote + "\n\n" : "";
   return [
     noteLine + "Re-render the kitchen design view as a photorealistic, photographic image of the same kitchen, fully installed and finished.",
-    layoutLine + "Preserve the layout exactly: keep every cabinet and shutter position, the island and appliance placement, window positions, proportions, and the camera angle identical to the input. Do not move, add, or remove any cabinetry. Change only the surface materials and finishes listed below.",
+    layoutLine + "Preserve the layout and everything that is not a restyled surface exactly: keep every cabinet and shutter position, the island and appliance placement, window positions, proportions, and the camera angle identical to the input. Keep the walls, ceiling, windows, and every appliance exactly as in the input, including the hood or chimney colour and finish, the oven, and the hob, and do not recolour or redesign them. Restyle only the surfaces that are already stone or cabinetry in the input. Do not add stone to any wall or ceiling that is not stone in the input, and do not extend stone up to the ceiling beyond where it appears in the input.",
     "",
     "Surfaces to apply:",
     "- Countertop and backsplash: " + stone + ".",
     "- Cabinet shutters, surfaced in " + cabinet + ".",
     "- Upper glass shutters: " + glass + ", framed in " + PROFILE + ".",
     "",
-    "Texture mapping: map every stone surface as large-format, book-matched polished slabs. The veining must be large in scale and flow continuously across each surface and across adjacent panels, as if cut from a single slab, and it must run continuously from the countertop up into the backsplash. Never render the stone as small, busy, repeating, or visibly tiled texture. Keep the stone scale and character consistent across every surface it covers, so the countertop, backsplash, and stone-surfaced cabinet fronts read as one cohesive material. Reproduce the colour, vein colour and density, pattern, and polish of each selected finish faithfully.",
+    "Texture mapping: map every stone surface as large-format, book-matched polished slabs. The veining must be large in scale and flow continuously across each surface and across adjacent panels, as if cut from a single slab, and it must run continuously from the countertop up into the backsplash. Never render the stone as small, busy, repeating, or visibly tiled texture. Keep the stone scale and character consistent across every surface it covers, so the countertop, backsplash, and stone-surfaced cabinet fronts read as one cohesive material. Match the reference stone swatch's actual character and subtlety exactly: reproduce its real colour, vein colour, vein density, and pattern, and if the reference is pale and lightly veined, keep it pale and lightly veined. Do not exaggerate, over-saturate, brighten, or add dramatic swirling veins that are not present in the reference swatch.",
     "",
     lighting,
     "",
