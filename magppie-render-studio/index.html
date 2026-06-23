@@ -93,7 +93,7 @@
   .action .hint { font-size: 13px; color: #8A887F; }
 
   /* Render screen */
-  .render-stage { border: 1px solid var(--line); border-radius: 4px; background: var(--paper); aspect-ratio: 16 / 9; overflow: hidden; position: relative; box-shadow: var(--shadow); }
+  .render-stage { border: 1px solid var(--line); border-radius: 4px; background: var(--paper); aspect-ratio: 3 / 2; overflow: hidden; position: relative; box-shadow: var(--shadow); }
   .render-stage img.result { width: 100%; height: 100%; object-fit: cover; display: block; }
   .loading { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; }
   .loading .shimmer { position: absolute; inset: 0; background: linear-gradient(100deg, var(--sand-soft) 30%, #fbfaf7 50%, var(--sand-soft) 70%); background-size: 220% 100%; animation: sweep 1.9s ease-in-out infinite; }
@@ -243,12 +243,10 @@
 
 <script>
   const FINISHES = [
-    { id: "bianco-lasa",    name: "Bianco Lasa" },
-    { id: "statuario-gold", name: "Statuario Gold" },
+    { id: "veticano",       name: "Veticano" },
     { id: "onyx-gold",      name: "Onyx Gold" },
-    { id: "taj",            name: "Taj" },
-    { id: "cosmic",         name: "Cosmic" },
-    { id: "trevi",          name: "Trevi" }
+    { id: "onyx-mystic",    name: "Onyx Mystic" },
+    { id: "cloudstone",     name: "Cloudstone" }
   ];
   const GLASS = [
     { id: "clear",   name: "Clear" },
@@ -260,7 +258,7 @@
     { id: "default", name: "Default" }
   ];
 
-  const state = { image: null, countertop: null, cabinet: "taj", glass: "fluted", lighting: "default", busy: false };
+  const state = { image: null, countertop: null, cabinet: "onyx-gold", glass: "fluted", lighting: "default", busy: false };
   const $ = (id) => document.getElementById(id);
   let lastUrl = null;
 
@@ -278,7 +276,7 @@
       sel.appendChild(o);
     });
   }
-  fill($("cabinet-select"), FINISHES, "taj");
+  fill($("cabinet-select"), FINISHES, "onyx-gold");
   fill($("countertop-select"), FINISHES, null, "Select a finish");
   fill($("glass-select"), GLASS, "fluted");
   fill($("lighting-select"), LIGHTING, "default");
@@ -354,6 +352,21 @@
 
   function finishName(id) { const f = FINISHES.find((x) => x.id === id); return f ? f.name : id; }
 
+  async function swatchDataUrl(key) {
+    if (!key) return null;
+    try {
+      const r = await fetch("swatches/" + key + ".jpg");
+      if (!r.ok) return null;
+      const blob = await r.blob();
+      return await new Promise((res) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = () => res(null);
+        fr.readAsDataURL(blob);
+      });
+    } catch { return null; }
+  }
+
   async function generate() {
     if (!state.image || !state.countertop) return;
     state.busy = true; refresh();
@@ -369,6 +382,8 @@
     runStatus(finishName(state.countertop));
 
     try {
+      const countertopSwatch = await swatchDataUrl(state.countertop);
+      const cabinetSwatch = (state.cabinet && state.cabinet !== state.countertop) ? await swatchDataUrl(state.cabinet) : null;
       const res = await fetch("/api/render", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -378,6 +393,8 @@
           cabinet: state.cabinet,
           glass: state.glass,
           lighting: state.lighting,
+          countertopSwatch,
+          cabinetSwatch,
           clientName: $("client-name").value.trim(),
           designerName: $("designer-name").value.trim(),
           salesPerson: $("sales-name").value.trim()
