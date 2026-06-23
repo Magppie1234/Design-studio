@@ -15,7 +15,7 @@
 
 import OpenAI, { toFile } from "openai";
 
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 120 };
 
 const IMAGE_MODEL   = process.env.OPENAI_IMAGE_MODEL   || "gpt-image-2";
 const VISION_MODEL  = process.env.OPENAI_VISION_MODEL  || "gpt-4o";
